@@ -4,13 +4,15 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <body>
         <a-scene embedded arjs>
-        <a-marker type="pattern" url="pattern-marker.patt">
+        <a-nft
+               type="nft"
+               url="be_happe">
             <a-entity
-            position="0 0 0"
-            scale="1 1 1"
-            gltf-model="3d_eye/scene.gltf"
-            ></a-entity>
-        </a-marker>
+                position="0 0 0"
+                scale="1 1 1"
+                gltf-model="3d_eye/scene.gltf">
+            </a-entity>
+        </a-nft>
         <a-entity camera></a-entity>
         </a-scene>
     </body>
