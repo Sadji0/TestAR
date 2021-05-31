@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
-    <script src="https://aframe.io/releases/1.0.0/aframe.min.js"></script>
-    <!-- we import arjs version without NFT but with marker + location based support -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-nft.js"></script>
     <body style="margin : 0px; overflow: hidden;">
         <a-scene embedded arjs renderer="logarithmicDepthBuffer: true;">
-        <a-marker preset="hiro">
+        <a-nft
+            type="nft"
+            url="be_happe"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance=".01"
+            smoothThreshold="5">
             <a-box position="0 0 0" rotation="0 0 0" scale="1 0.5 1" color="#4CC3D9"></a-box>
-        </a-marker>
+        </a-nft>
         <a-entity camera></a-entity>
         </a-scene>
     </body>
