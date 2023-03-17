@@ -21,10 +21,9 @@
               smoothCount="10"
               smoothTolerance="0.01"
               smoothThreshold="5"
-              material
-              arjs-anchor
-              arjs-hit-testing
               >
+
+                <a-sphere position="0 0 0" radius="0.5" color="#51ef2d"></a-sphere>
 
                 <a-image position="0 0 0" rotation="90 0 0" scale="2 2 2" 
                     src="#my-image"
@@ -34,4 +33,12 @@
         <a-entity camera></a-entity>
         </a-scene>
     </body>
+
+    <script>
+        // alert("start loading");
+        window.addEventListener("arjs-nft-loaded", (event) => {
+            // Hide loading overlay
+            alert("loaded");
+        });
+    </script>
 </html>
