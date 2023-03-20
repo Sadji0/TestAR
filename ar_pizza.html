@@ -1,0 +1,157 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://aframe.io/releases/1.0.1/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://unpkg.com/aframe-text-geometry-component/dist/aframe-text-geometry-component.min.js"></script>
+
+  <script>
+    var data_wheel = [550, 800, 300, 700, 900, 500,
+      5000, 0, 300, 500, 450, 500,
+      800, 0, 700, 0, 650, 0,
+      900, 500, 350, 600, 500, 400];
+    var random_angle;
+    document.addEventListener("DOMContentLoaded", function () {
+      const pizzaTarget = document.querySelector('#pizza_target');
+      const playButton = document.querySelector("#play_button_obj");
+
+      pizzaTarget.addEventListener("targetFound", event => {
+        document.querySelector('#text_msg').innerHTML = "Pizza found";
+      });
+
+      pizzaTarget.addEventListener("targetLost", event => {
+        document.querySelector('#text_msg').innerHTML = "Pizza lost";
+      });
+
+      playButton.addEventListener("click", event => {
+
+        document.querySelector('#text_won_entity').innerHTML = "";
+
+        document.querySelector('#play_button_plane').removeAttribute('class');
+        const wheel_ar = document.querySelector('#wheel_ar');
+        const playButtonText = document.querySelector('#play_button_text');
+        const playButtonPos = playButtonText.getAttribute('position');
+
+        wheel_ar.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+        playButtonText.setAttribute('position', { x: -0.46, y: playButtonPos['y'], z: playButtonPos['z'] });
+        playButtonText.setAttribute('value', 'ROLLING');
+
+        var sum_of_rotation = 5;
+        random_angle = Math.floor(Math.random() * 360);
+        var result_rotation = random_angle + 360 * sum_of_rotation;
+        document.querySelector('#text_msg').innerHTML = "Random numb: " + random_angle;
+        wheel_ar.setAttribute('animation__rolling', {
+          property: 'rotation',
+          dir: 'alternate',
+          dur: 10000,
+          easing: 'easeInOutExpo',
+          loop: false,
+          to: '0 0 ' + result_rotation
+        });
+      });
+
+      document.querySelector('#wheel_ar').addEventListener("animationcomplete__rolling", event => {
+        // console.log("Событие окончания сработало!");
+        const playButtonText = document.querySelector('#play_button_text');
+        const playButtonPos = playButtonText.getAttribute('position');
+        // const textWonEntity = document.querySelector('#text_won_entity');
+
+        playButtonText.setAttribute('value', 'START');
+        document.querySelector('#play_button_plane').setAttribute('class', "clickable");
+        playButtonText.setAttribute('position', { x: -0.35, y: playButtonPos['y'], z: playButtonPos['z'] });
+
+        var num_sector = Math.ceil(((random_angle) % 360) / 15);
+
+        var winBlock = document.querySelector("#text_won_entity");
+        let winBlockText = document.createElement('a-entity');
+
+        winBlockText.setAttribute('position', { x: 0, y: 0, z: 0 });
+        winBlockText.setAttribute('rotation', { x: 90, y: 0, z: 0 });
+        winBlockText.setAttribute('scale', { x: 0, y: 0, z: 0 });
+        winBlockText.setAttribute('id', 'win_block_text');
+
+        // winBlock.setAttribute('rotation', { x: 0, y: 0, z: 0 });
+
+        winBlockText.setAttribute('animation__changeposx', {
+          property: 'position',
+          // dir: 'alternate',
+          dur: 2000,
+          easing: 'linear',
+          loop: false,
+          to: '-0.4 0 0.1'
+        });
+
+        winBlock.setAttribute('animation__rotationy', {
+          property: 'rotation',
+          dur: 2000,
+          easing: 'linear',
+          to: '0 0 360',
+          from: '0 0 0',
+          loop: true
+        });
+
+        winBlockText.setAttribute('animation__upscale', {
+          property: 'scale',
+          // dir: 'alternate',
+          dur: 2000,
+          easing: 'linear',
+          loop: false,
+          to: '0.5 0.5 0.5'
+        });
+        let prize = data_wheel[24 - num_sector];
+        winBlockText.setAttribute('material', { color: 'gold' });
+        winBlockText.setAttribute('text-geometry', { value: prize + '$' });
+        winBlock.appendChild(winBlockText);
+        setTimeout(sendCallbackToSalebot, 0, prize);
+      });
+    });
+
+    function sendCallbackToSalebot(value) {
+      let client_id = window.location.search.substring(5);
+      if (client_id) {
+        let response_send_msg = fetch(`https://chatter.salebot.pro/api/73fbb5597eb5faca846835e45aa2787b/callback?message=pizzacomplete&client_id=${client_id}&day_point_game=${value}`, { mode: 'no-cors' })
+          .then(function () {
+            console.log("all ok");
+            // alert(`We Sended result in bot.\nClient_id: ${client_id}\npoints: ${value}`);
+          });
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <p id="text_msg" style="color: white;">Random val</p>
+  <a-scene mindar-image="imageTargetSrc: https://sadji0.github.io/TestAR/triggers_pizza/targets_scale1.mind"
+    color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-assets>
+      <img id="wheel" src="https://sadji0.github.io/TestAR/wheel.png">
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"
+      raycaster="far: ${customFields.libVersion}; objects: .clickable"></a-camera>
+
+    <a-entity id="pizza_target" mindar-image-target="targetIndex: 0">
+
+      <a-entity id="text_won_entity" position="0 0 0" rotation="0 0 0">
+      </a-entity>
+
+      <a-image id="wheel_ar" position="0 0 0" rotation="0 0 0" scale="1 1 1" src="#wheel">
+      </a-image>
+
+      <a-text id="arrow" value=">" position="0.7 -0.02 0.001" rotation="0 0 -180" color="red" scale="2 1 0"></a-text>
+
+      <a-entity id="play_button_obj" position="0 -0.7 0" scale="0.5 0.5 0.5">
+        <a-plane id="play_button_plane" class="clickable" position="0 0 0" width="1" height="0.5"
+          color="green"></a-plane>
+        <a-text id="play_button_text" value="START" position="-0.35 0 0.05"></a-text>
+      </a-entity>
+
+    </a-entity>
+
+  </a-scene>
+</body>
+
+</html>
