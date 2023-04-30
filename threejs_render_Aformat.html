@@ -1,0 +1,113 @@
+<html>
+
+<head>
+    <title>Test A formatting</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+	"three": "https://unpkg.com/three@0.147.0/build/three.module.js",
+	"three/addons/": "https://unpkg.com/three@0.147.0/examples/jsm/",
+	"mindar-image-three":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-three.prod.js"
+      }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { MindARThree } from 'mindar-image-three';
+        const mindarThree = new MindARThree({
+            container: document.querySelector("#container"),
+            imageTargetSrc: "https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.0/examples/image-tracking/assets/card-example/card.mind",
+            uiError: "no",
+            uiLoading: "no",
+            uiScanning: "no"
+        });
+        const { renderer, scene, camera } = mindarThree;
+        const anchor = mindarThree.addAnchor(0);
+        let geometry = new THREE.PlaneGeometry(1, 0.55);
+        let material = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5 });
+        const plane = new THREE.Mesh(geometry, material);
+        anchor.group.add(plane);
+        const start = async () => {
+            await mindarThree.start();
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
+        }
+        const startButton = document.querySelector("#startButton");
+        start();
+        startButton.addEventListener("click", () => {
+            // start();
+        });
+        stopButton.addEventListener("click", () => {
+            mindarThree.stop();
+            mindarThree.renderer.setAnimationLoop(null);
+        });
+
+        //add cube on scene
+        geometry = new THREE.PlaneGeometry(2.1, 2.97);
+        material = new THREE.MeshBasicMaterial({
+            color: 0x00ff00
+            // colorWrite: false
+        });
+        const plane_A = new THREE.Mesh(geometry, material);
+        plane_A.position.z = -11;
+        // console.log(plane_A);
+        scene.add(plane_A);
+
+        const input_int1 = document.querySelector("#range_int1");
+
+        const text_int1 = document.querySelector("#range_int1_text");
+
+        let start_val_z_plane = -11;
+
+        input_int1.addEventListener("input", (event) => {
+            let res_val = start_val_z_plane - event.target.value;
+            text_int1.textContent = res_val;
+            plane_A.position.z = res_val;
+
+        });
+
+        const continueIntButton = document.querySelector("#continueIntButton");
+        continueIntButton.addEventListener("click", () => {
+            start_val_z_plane = plane_A.position.z;
+        });
+
+    </script>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #control {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="control">
+        <button id="startButton">Start</button>
+        <button id="stopButton">Stop</button>
+        <h1 id="range_int1_text">0</h1>
+        <input type="range" id="range_int1" name="volume" min="0" max="10" step="1" value="0"
+            style="width:500px; margin-top:20px">
+        <button id="continueIntButton">Continue as Int</button>
+    </div>
+    <div id="container">
+    </div>
+</body>
+
+</html>
