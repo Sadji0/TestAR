@@ -46,22 +46,22 @@
             mindarThree.renderer.setAnimationLoop(null);
         });
 
-        //add cube on scene
+        let start_val_z_plane = -25; //30 for 3 steps 
+
+        //add plane on scene
         geometry = new THREE.PlaneGeometry(2.1, 2.97);
         material = new THREE.MeshBasicMaterial({
             color: 0x00ff00
             // colorWrite: false
         });
         const plane_A = new THREE.Mesh(geometry, material);
-        plane_A.position.z = -11;
+        plane_A.position.z = start_val_z_plane;
         // console.log(plane_A);
         scene.add(plane_A);
 
         const input_int1 = document.querySelector("#range_int1");
 
-        const text_int1 = document.querySelector("#range_int1_text");
-
-        let start_val_z_plane = -25; //30 for 3 steps
+        const text_int1 = document.querySelector("#range_int1_text");
 
         input_int1.addEventListener("input", (event) => {
             let res_val = start_val_z_plane - event.target.value;
