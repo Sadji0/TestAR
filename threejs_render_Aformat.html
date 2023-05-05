@@ -17,6 +17,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { MindARThree } from 'mindar-image-three';
+        try {
         const mindarThree = new MindARThree({
             container: document.querySelector("#container"),
             imageTargetSrc: "https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.0/examples/image-tracking/assets/card-example/card.mind",
@@ -36,44 +37,81 @@
                 renderer.render(scene, camera);
             });
         }
-        const startButton = document.querySelector("#startButton");
-        //start();
-        startButton.addEventListener("click", () => {
-            start();
-        });
-        stopButton.addEventListener("click", () => {
-            mindarThree.stop();
-            mindarThree.renderer.setAnimationLoop(null);
-        });
+        // const startButton = document.querySelector("#startButton");
+        // const stopButton = document.querySelector("#stopButton");
+        start();
+        // startButton.addEventListener("click", () => {
+        //     //start();
+        // });
+        // stopButton.addEventListener("click", () => {
+        //     mindarThree.stop();
+        //     mindarThree.renderer.setAnimationLoop(null);
+        // });
 
-        let start_val_z_plane = -25; //30 for 3 steps 
+        let start_val_z_plane = -31; //-29 for 3 steps 
 
         //add plane on scene
-        geometry = new THREE.PlaneGeometry(2.1, 2.97);
-        material = new THREE.MeshBasicMaterial({
+        geometry = new THREE.PlaneGeometry(1, 1);
+        let material_plane = new THREE.MeshBasicMaterial({
             color: 0x00ff00
-            // colorWrite: false
         });
-        const plane_A = new THREE.Mesh(geometry, material);
+        const plane_A = new THREE.Mesh(geometry, material_plane);
         plane_A.position.z = start_val_z_plane;
         // console.log(plane_A);
+        plane_A.scale.set(2.1, 2.97, 0)
         scene.add(plane_A);
 
         const input_int1 = document.querySelector("#range_int1");
 
-        const text_int1 = document.querySelector("#range_int1_text");
+        const text_int1 = document.querySelector("#range_int1_text");
 
         input_int1.addEventListener("input", (event) => {
-            let res_val = start_val_z_plane - event.target.value;
-            text_int1.textContent = res_val;
+            //let res_val = start_val_z_plane - event.target.value;
+            let res_val = -event.target.value * 10 - 1;
+            text_int1.textContent = event.target.value;
             plane_A.position.z = res_val;
-
         });
 
-        const continueIntButton = document.querySelector("#continueIntButton");
-        continueIntButton.addEventListener("click", () => {
-            start_val_z_plane = plane_A.position.z;
+        // const continueIntButton = document.querySelector("#continueIntButton");
+        // continueIntButton.addEventListener("click", () => {
+        //     start_val_z_plane = plane_A.position.z;
+        // });
+
+
+        const input_a_format = document.querySelector("#range_a_format");
+        const text_a_format = document.querySelector("#range_a_format_text");
+
+        input_a_format.addEventListener("input", (event) => {
+            if (event.target.value == 0) {
+                text_a_format.textContent = "A4";
+                plane_A.scale.set(2.1, 2.97, 0)
+
+            } else if (event.target.value == 1) {
+                text_a_format.textContent = "A3";
+                plane_A.scale.set(2.97, 4.2, 0)
+
+            } else if (event.target.value == 2) {
+                text_a_format.textContent = "A2";
+                plane_A.scale.set(4.2, 5.94, 0)
+
+            } else if (event.target.value == 3) {
+                text_a_format.textContent = "A1";
+                plane_A.scale.set(5.94, 8.41, 0)
+
+            } else if (event.target.value == 4) {
+                text_a_format.textContent = "A0";
+                plane_A.scale.set(8.41, 11.89, 0)
+
+            }
         });
+
+
+        const turnButton = document.querySelector("#rotatePlaneButton");
+
+        turnButton.addEventListener("click", () => {
+            plane_A.rotation.z += Math.PI / 2;
+        });
+    } catch (err) {alert(err);}
 
     </script>
     <style>
@@ -94,17 +132,31 @@
             left: 0;
             z-index: 2;
         }
+
+        #range_int1,
+        #range_a_format {
+            width: 60vw;
+        }
+
+        #range_int1_text,
+        #range_a_format_text {
+            color: red;
+        }
     </style>
 </head>
 
 <body>
     <div id="control">
-        <button id="startButton">Start</button>
-        <button id="stopButton">Stop</button>
-        <h1 id="range_int1_text">0</h1>
-        <input type="range" id="range_int1" name="volume" min="0" max="10" step="0.5" value="0"
-            style="width:500px; margin-top:20px">
-        <button id="continueIntButton">Continue as Int</button>
+        <!-- <button id="startButton">Start</button>
+        <button id="stopButton">Stop</button> -->
+
+        <h1 id="range_int1_text">3</h1>
+        <input type="range" id="range_int1" name="volume" min="3" max="9" step="1" value="3">
+        <!-- <button id="continueIntButton">Continue as Int</button> -->
+
+        <h1 id="range_a_format_text">A4</h1>
+        <input type="range" id="range_a_format" name="volume" min="0" max="10" step="1" value="0">
+        <button id="rotatePlaneButton">Turn</button>
     </div>
     <div id="container">
     </div>
