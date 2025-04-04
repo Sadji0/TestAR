@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+<!--version AFrame v1-->
 <html>
-<!--version 0.31-->
 <head>
     <meta charset="utf-8">
-    <title>AR Ball Destruction</title>
+    <title>AR Ball Destruction with A-Frame</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
         body {
             margin: 0;
@@ -14,207 +16,132 @@
             width: 100%;
             height: 100%;
         }
-        #ar-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
     </style>
 </head>
 <body>
     <div id="ar-container">
-        <canvas id="ar-canvas"></canvas>
+        <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: true;" 
+                renderer="colorManagement: true;" 
+                cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+            
+            <!-- Камера -->
+            <a-camera position="0 0 0" cursor="fuse: false"></a-camera>
+            
+            <!-- Источник света -->
+            <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 0.5" position="-1 1 0"></a-entity>
+            
+            <!-- Стенка -->
+            <a-entity id="wall" class="clickable" geometry="primitive: box; width: 1; height: 1; depth: 0.1" 
+                     material="color: #88F; opacity: 0.8; transparent: true" 
+                     position="0 0 -2"></a-entity>
+            
+            <!-- Маркер цели (невидимый) -->
+            <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+        </a-scene>
     </div>
 
-    <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
-        import { MindARThree } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-three.prod.js';
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const mindarThree = new MindARThree({
-                    container: document.getElementById('ar-container'),
-                    imageTargetSrc: 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/examples/image-tracking/assets/card-example/card.mind',
-                });
+    <script>
+        // Ждем загрузки сцены
+        document.querySelector('a-scene').addEventListener('loaded', function() {
+            const scene = this;
+            const wall = document.querySelector('#wall');
+            let fragments = [];
+            
+            // Обработчик клика по экрану
+            scene.addEventListener('click', function(evt) {
+                // Не стреляем, если есть осколки
+                if (fragments.length > 0) return;
                 
-                const { renderer, scene, camera } = mindarThree;
+                // Создаем шар
+                const ball = document.createElement('a-sphere');
+                ball.setAttribute('class', 'clickable');
+                ball.setAttribute('radius', '0.1');
+                ball.setAttribute('position', '0 0 -0.5');
+                ball.setAttribute('material', 'color: red');
+                ball.setAttribute('dynamic-body', 'shape: sphere; mass: 1');
+                ball.setAttribute('velocity', '0 0 -5');
                 
-                // Настройка освещения
-                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-                scene.add(light);
+                // Добавляем шар на сцену
+                scene.appendChild(ball);
                 
-                // Создание стены
-                let wall = createWall();
-                scene.add(wall);
+                // Удаляем шар через 3 секунды (если не попал в стену)
+                setTimeout(() => {
+                    if (ball.parentNode) {
+                        scene.removeChild(ball);
+                    }
+                }, 3000);
+            });
+            
+            // Проверка столкновений
+            scene.addEventListener('collide', function(e) {
+                const ball = e.detail.target.el;
+                const other = e.detail.body.el;
                 
-                // Массив для хранения шаров
-                const balls = [];
-                
-                // Массив для хранения осколков
-                let fragments = [];
-                
-                // Обработчик клика по экрану
-                renderer.domElement.addEventListener('click', (e) => {
-                    if (fragments.length > 0) return; // Не стрелять, если есть осколки
+                // Если шар столкнулся со стеной
+                if (other.id === 'wall' && ball.getAttribute('class').includes('clickable')) {
+                    // Удаляем шар
+                    scene.removeChild(ball);
                     
-                    const ball = createBall();
-                    scene.add(ball.mesh);
-                    balls.push(ball);
-                });
+                    // Разрушаем стену
+                    destroyWall(wall);
+                }
+            });
+            
+            // Функция разрушения стены
+            function destroyWall(wall) {
+                const position = wall.getAttribute('position');
+                const material = wall.getAttribute('material');
                 
-                // Создание стены
-                function createWall() {
-                    const wallGeometry = new THREE.BoxGeometry(1, 1, 0.1);
-                    const wallMaterial = new THREE.MeshStandardMaterial({ 
-                        color: 0x8888ff,
-                        transparent: true,
-                        opacity: 0.8
+                // Удаляем стену
+                scene.removeChild(wall);
+                
+                // Создаем осколки
+                for (let i = 0; i < 30; i++) {
+                    const fragment = document.createElement('a-box');
+                    fragment.setAttribute('width', '0.1');
+                    fragment.setAttribute('height', '0.1');
+                    fragment.setAttribute('depth', '0.1');
+                    fragment.setAttribute('material', `color: ${material.color}; opacity: 0.8; transparent: true`);
+                    fragment.setAttribute('position', {
+                        x: position.x + (Math.random() - 0.5) * 0.5,
+                        y: position.y + (Math.random() - 0.5) * 0.5,
+                        z: position.z
                     });
-                    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-                    wall.position.set(0, 0, -2);
-                    return wall;
-                }
-                
-                // Создание шара
-                function createBall() {
-                    const radius = 0.1;
-                    const geometry = new THREE.SphereGeometry(radius, 32, 32);
-                    const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-                    const mesh = new THREE.Mesh(geometry, material);
+                    fragment.setAttribute('dynamic-body', 'shape: box; mass: 0.5');
+                    fragment.setAttribute('velocity', {
+                        x: (Math.random() - 0.5) * 2,
+                        y: (Math.random() - 0.5) * 2,
+                        z: (Math.random() - 0.5) * 2
+                    });
+                    fragment.setAttribute('angular-velocity', {
+                        x: Math.random() * 5,
+                        y: Math.random() * 5,
+                        z: Math.random() * 5
+                    });
                     
-                    // Начальная позиция - перед камерой
-                    mesh.position.set(0, 0, -0.5);
+                    scene.appendChild(fragment);
+                    fragments.push(fragment);
                     
-                    // Направление движения - вперед
-                    const direction = new THREE.Vector3(0, 0, -1);
-                    
-                    return {
-                        mesh,
-                        direction,
-                        speed: 0.2,
-                        radius,
-                        active: true
-                    };
-                }
-                
-                // Создание осколков при разрушении стены
-                function createFragments(wall) {
-                    const fragmentCount = 50;
-                    const fragments = [];
-                    
-                    // Получаем геометрию и материал стены
-                    const wallGeometry = wall.geometry;
-                    const wallMaterial = wall.material.clone();
-                    wallMaterial.transparent = true;
-                    
-                    // Создаем осколки
-                    for (let i = 0; i < fragmentCount; i++) {
-                        const size = 0.1 + Math.random() * 0.1;
-                        const geometry = new THREE.BoxGeometry(size, size, size);
-                        
-                        const fragment = new THREE.Mesh(geometry, wallMaterial);
-                        
-                        // Позиция осколка - случайная точка на стене
-                        fragment.position.copy(wall.position);
-                        fragment.position.x += (Math.random() - 0.5) * 1;
-                        fragment.position.y += (Math.random() - 0.5) * 1;
-                        
-                        // Случайное вращение
-                        fragment.rotation.set(
-                            Math.random() * Math.PI,
-                            Math.random() * Math.PI,
-                            Math.random() * Math.PI
-                        );
-                        
-                        // Случайное направление и скорость
-                        fragment.userData.velocity = new THREE.Vector3(
-                            (Math.random() - 0.5) * 0.2,
-                            (Math.random() - 0.5) * 0.2,
-                            (Math.random() - 0.5) * 0.2
-                        );
-                        
-                        fragment.userData.angularVelocity = new THREE.Vector3(
-                            Math.random() * 0.1,
-                            Math.random() * 0.1,
-                            Math.random() * 0.1
-                        );
-                        
-                        fragments.push(fragment);
-                        scene.add(fragment);
-                    }
-                    
-                    return fragments;
-                }
-                
-                // Запуск AR
-                await mindarThree.start();
-                renderer.setAnimationLoop(() => {
-                    // Обновление шаров
-                    for (let i = balls.length - 1; i >= 0; i--) {
-                        const ball = balls[i];
-                        if (!ball.active) continue;
-                        
-                        // Перемещение шара
-                        ball.mesh.position.x += ball.direction.x * ball.speed;
-                        ball.mesh.position.y += ball.direction.y * ball.speed;
-                        ball.mesh.position.z += ball.direction.z * ball.speed;
-                        
-                        // Проверка столкновения со стеной
-                        if (ball.mesh.position.distanceTo(wall.position) < 1) {
-                            // Создание осколков
-                            fragments = createFragments(wall);
+                    // Удаляем осколки через 3 секунды
+                    setTimeout(() => {
+                        if (fragment.parentNode) {
+                            scene.removeChild(fragment);
+                            fragments = fragments.filter(f => f !== fragment);
                             
-                            // Удаление стены
-                            scene.remove(wall);
-                            
-                            // Удаление шара
-                            scene.remove(ball.mesh);
-                            ball.active = false;
-                            balls.splice(i, 1);
-                        }
-                        
-                        // Удаление шаров, улетевших далеко
-                        if (ball.mesh.position.z < -5) {
-                            scene.remove(ball.mesh);
-                            balls.splice(i, 1);
-                        }
-                    }
-                    
-                    // Обновление осколков
-                    for (let i = fragments.length - 1; i >= 0; i--) {
-                        const fragment = fragments[i];
-                        
-                        // Перемещение осколка
-                        fragment.position.x += fragment.userData.velocity.x;
-                        fragment.position.y += fragment.userData.velocity.y;
-                        fragment.position.z += fragment.userData.velocity.z;
-                        
-                        // Вращение осколка
-                        fragment.rotation.x += fragment.userData.angularVelocity.x;
-                        fragment.rotation.y += fragment.userData.angularVelocity.y;
-                        fragment.rotation.z += fragment.userData.angularVelocity.z;
-                        
-                        // Гравитация
-                        fragment.userData.velocity.y -= 0.01;
-                        
-                        // Удаление осколков, упавших ниже определенной точки
-                        if (fragment.position.y < -3) {
-                            scene.remove(fragment);
-                            fragments.splice(i, 1);
-                            
-                            // Если все осколки исчезли, создаем новую стену
+                            // Если все осколки удалены, восстанавливаем стену
                             if (fragments.length === 0) {
-                                wall = createWall();
-                                scene.add(wall);
+                                const newWall = document.createElement('a-entity');
+                                newWall.setAttribute('id', 'wall');
+                                newWall.setAttribute('class', 'clickable');
+                                newWall.setAttribute('geometry', 'primitive: box; width: 1; height: 1; depth: 0.1');
+                                newWall.setAttribute('material', 'color: #88F; opacity: 0.8; transparent: true');
+                                newWall.setAttribute('position', '0 0 -2');
+                                scene.appendChild(newWall);
                             }
                         }
-                    }
-                    
-                    renderer.render(scene, camera);
-                });
-
-            } catch (error) {
-                console.error('Error initializing AR:', error);
+                    }, 3000);
+                }
             }
         });
     </script>
